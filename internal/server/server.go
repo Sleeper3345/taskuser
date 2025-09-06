@@ -6,6 +6,7 @@ import (
     "taskuser/internal/repository/inmemory"
     "taskuser/internal/service/taskservice"
     "taskuser/internal/domain/tasks/models"
+    "taskuser/internal/service/userservice"
 )
 
 type CustomValidator struct {
@@ -18,7 +19,6 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 
 func New() *echo.Echo {
     e := echo.New()
-
     v := validator.New()
 
     v.RegisterValidation("status", func(fl validator.FieldLevel) bool {
@@ -31,6 +31,10 @@ func New() *echo.Echo {
     repo := inmemory.NewTaskRepository()
     service := taskservice.NewTaskService(repo)
     RegisterTaskRoutes(e, service)
+
+    userRepo := inmemory.NewUserRepository()
+    userService := userservice.NewUserService(userRepo)
+    RegisterUserRoutes(e, userService)
 
     return e
 }
