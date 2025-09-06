@@ -5,33 +5,33 @@ import (
     "strconv"
 
     "github.com/labstack/echo/v4"
-    "taskuser/internal/domain/tasks/models"
-    "taskuser/internal/service/taskservice"
+    "taskuser/internal/domain/users/models"
+    "taskuser/internal/service/userservice"
 )
 
-func RegisterTaskRoutes(e *echo.Echo, service *taskservice.TaskService) {
-    e.GET("/tasks", func(c echo.Context) error {
+func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
+    e.GET("/users", func(c echo.Context) error {
         return c.JSON(http.StatusOK, service.Repository().GetAll())
     })
 
-    e.GET("/tasks/:id", func(c echo.Context) error {
+    e.GET("/users/:id", func(c echo.Context) error {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
-            return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный id"})
+            return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный ID"})
         }
 
-        task, err := service.Repository().GetByID(id)
+        user, err := service.Repository().GetByID(id)
 
         if err != nil {
-            return c.JSON(http.StatusNotFound, map[string]string{"error": "Запись не найдена"})
+            return c.JSON(http.StatusNotFound, map[string]string{"error": "Пользователь не найден"})
         }
 
-        return c.JSON(http.StatusOK, task)
+        return c.JSON(http.StatusOK, user)
     })
 
-    e.POST("/tasks", func(c echo.Context) error {
-        var dto models.CreateTask
+    e.POST("/users", func(c echo.Context) error {
+        var dto models.CreateUser
 
         if err := c.Bind(&dto); err != nil {
             return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный JSON"})
@@ -41,25 +41,25 @@ func RegisterTaskRoutes(e *echo.Echo, service *taskservice.TaskService) {
             return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
         }
     
-        task := models.Task{
-            Title:       dto.Title,
-            Description: dto.Description,
-            Status:      dto.Status,
+        user := models.User{
+            Name:     dto.Name,
+            Email:    dto.Email,
+            Password: dto.Password,
         }
     
-        created := service.Repository().Create(task)
-        
+        created := service.Repository().Create(user)
+
         return c.JSON(http.StatusCreated, created)
     })
 
-    e.PUT("/tasks/:id", func(c echo.Context) error {
+    e.PUT("/users/:id", func(c echo.Context) error {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
             return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный ID"})
         }
     
-        var dto models.UpdateTask
+        var dto models.UpdateUser
 
         if err := c.Bind(&dto); err != nil {
             return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный JSON"})
@@ -72,19 +72,19 @@ func RegisterTaskRoutes(e *echo.Echo, service *taskservice.TaskService) {
         existing, err := service.Repository().GetByID(id)
 
         if err != nil {
-            return c.JSON(http.StatusNotFound, map[string]string{"error": "Запись не найдена"})
+            return c.JSON(http.StatusNotFound, map[string]string{"error": "Пользователь не найден"})
         }
     
-        if dto.Title != nil {
-            existing.Title = *dto.Title
+        if dto.Name != nil {
+            existing.Name = *dto.Name
         }
 
-        if dto.Description != nil {
-            existing.Description = *dto.Description
+        if dto.Email != nil {
+            existing.Email = *dto.Email
         }
 
-        if dto.Status != nil {
-            existing.Status = *dto.Status
+        if dto.Password != nil {
+            existing.Password = *dto.Password
         }
     
         updated, _ := service.Repository().Update(id, *existing)
@@ -92,15 +92,15 @@ func RegisterTaskRoutes(e *echo.Echo, service *taskservice.TaskService) {
         return c.JSON(http.StatusOK, updated)
     })
 
-    e.DELETE("/tasks/:id", func(c echo.Context) error {
+    e.DELETE("/users/:id", func(c echo.Context) error {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
-            return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный id"})
+            return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный ID"})
         }
 
         if err := service.Repository().Delete(id); err != nil {
-            return c.JSON(http.StatusNotFound, map[string]string{"error": "Запись не найдена"})
+            return c.JSON(http.StatusNotFound, map[string]string{"error": "Пользователь не найден"})
         }
 
         return c.NoContent(http.StatusNoContent)
