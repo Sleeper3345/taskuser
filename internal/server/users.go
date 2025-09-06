@@ -3,11 +3,26 @@ package server
 import (
     "net/http"
     "strconv"
+    "errors"
 
     "github.com/labstack/echo/v4"
     "taskuser/internal/domain/users/models"
     "taskuser/internal/service/userservice"
+    domainErrors "taskuser/internal/domain/users/errors"
 )
+
+func handleUserError(c echo.Context, err error) error {
+    switch {
+    case errors.Is(err, domainErrors.ErrIncorrectId):
+        return c.JSON(http.StatusBadRequest, map[string]string{"error": domainErrors.ErrIncorrectId.Error()})
+    case errors.Is(err, domainErrors.ErrUserNotFound):
+        return c.JSON(http.StatusNotFound, map[string]string{"error": domainErrors.ErrUserNotFound.Error()})
+    case errors.Is(err, domainErrors.ErrIncorrectJson):
+        return c.JSON(http.StatusBadRequest, map[string]string{"error": domainErrors.ErrIncorrectJson.Error()})
+    default:
+        return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Внутренняя ошибка сервера"})
+    }
+}
 
 func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
     e.GET("/users", func(c echo.Context) error {
@@ -18,13 +33,13 @@ func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
-            return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный ID"})
+            return handleUserError(c, domainErrors.ErrIncorrectId)
         }
 
         user, err := service.Repository().GetByID(id)
 
         if err != nil {
-            return c.JSON(http.StatusNotFound, map[string]string{"error": "Пользователь не найден"})
+            return handleUserError(c, domainErrors.ErrUserNotFound)
         }
 
         return c.JSON(http.StatusOK, user)
@@ -34,7 +49,7 @@ func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
         var dto models.CreateUser
 
         if err := c.Bind(&dto); err != nil {
-            return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный JSON"})
+            return handleUserError(c, domainErrors.ErrIncorrectJson)
         }
     
         if err := c.Validate(&dto); err != nil {
@@ -56,13 +71,13 @@ func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
-            return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный ID"})
+            return handleUserError(c, domainErrors.ErrIncorrectId)
         }
     
         var dto models.UpdateUser
 
         if err := c.Bind(&dto); err != nil {
-            return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный JSON"})
+            return handleUserError(c, domainErrors.ErrIncorrectJson)
         }
     
         if err := c.Validate(&dto); err != nil {
@@ -72,7 +87,7 @@ func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
         existing, err := service.Repository().GetByID(id)
 
         if err != nil {
-            return c.JSON(http.StatusNotFound, map[string]string{"error": "Пользователь не найден"})
+            return handleUserError(c, domainErrors.ErrUserNotFound)
         }
     
         if dto.Name != nil {
@@ -96,11 +111,11 @@ func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
-            return c.JSON(http.StatusBadRequest, map[string]string{"error": "Некорректный ID"})
+            return handleUserError(c, domainErrors.ErrIncorrectId)
         }
 
         if err := service.Repository().Delete(id); err != nil {
-            return c.JSON(http.StatusNotFound, map[string]string{"error": "Пользователь не найден"})
+            return handleUserError(c, domainErrors.ErrUserNotFound)
         }
 
         return c.NoContent(http.StatusNoContent)
