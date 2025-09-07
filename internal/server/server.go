@@ -19,6 +19,10 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 
 func New() *echo.Echo {
     e := echo.New()
+
+    RegisterAuthRoutes(e)
+    RegisterProfileRoutes(e)
+
     v := validator.New()
 
     v.RegisterValidation("status", func(fl validator.FieldLevel) bool {

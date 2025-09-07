@@ -25,11 +25,13 @@ func handleUserError(c echo.Context, err error) error {
 }
 
 func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
-    e.GET("/users", func(c echo.Context) error {
+    g := e.Group("/users", JWTMiddleware)
+
+    g.GET("", func(c echo.Context) error {
         return c.JSON(http.StatusOK, service.Repository().GetAll())
     })
 
-    e.GET("/users/:id", func(c echo.Context) error {
+    g.GET("/:id", func(c echo.Context) error {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
@@ -45,7 +47,7 @@ func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
         return c.JSON(http.StatusOK, user)
     })
 
-    e.POST("/users", func(c echo.Context) error {
+    g.POST("", func(c echo.Context) error {
         var dto models.CreateUser
 
         if err := c.Bind(&dto); err != nil {
@@ -67,7 +69,7 @@ func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
         return c.JSON(http.StatusCreated, created)
     })
 
-    e.PUT("/users/:id", func(c echo.Context) error {
+    g.PUT("/:id", func(c echo.Context) error {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
@@ -107,7 +109,7 @@ func RegisterUserRoutes(e *echo.Echo, service *userservice.UserService) {
         return c.JSON(http.StatusOK, updated)
     })
 
-    e.DELETE("/users/:id", func(c echo.Context) error {
+    g.DELETE("/:id", func(c echo.Context) error {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
