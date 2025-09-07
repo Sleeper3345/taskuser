@@ -25,11 +25,13 @@ func handleTaskError(c echo.Context, err error) error {
 }
 
 func RegisterTaskRoutes(e *echo.Echo, service *taskservice.TaskService) {
-    e.GET("/tasks", func(c echo.Context) error {
+    g := e.Group("/tasks", JWTMiddleware)
+
+    g.GET("", func(c echo.Context) error {
         return c.JSON(http.StatusOK, service.Repository().GetAll())
     })
 
-    e.GET("/tasks/:id", func(c echo.Context) error {
+    g.GET("/:id", func(c echo.Context) error {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
@@ -45,7 +47,7 @@ func RegisterTaskRoutes(e *echo.Echo, service *taskservice.TaskService) {
         return c.JSON(http.StatusOK, task)
     })
 
-    e.POST("/tasks", func(c echo.Context) error {
+    g.POST("", func(c echo.Context) error {
         var dto models.CreateTask
 
         if err := c.Bind(&dto); err != nil {
@@ -67,7 +69,7 @@ func RegisterTaskRoutes(e *echo.Echo, service *taskservice.TaskService) {
         return c.JSON(http.StatusCreated, created)
     })
 
-    e.PUT("/tasks/:id", func(c echo.Context) error {
+    g.PUT("/:id", func(c echo.Context) error {
         id, err := strconv.Atoi(c.Param("id"))
 
         if err != nil {
@@ -107,7 +109,7 @@ func RegisterTaskRoutes(e *echo.Echo, service *taskservice.TaskService) {
         return c.JSON(http.StatusOK, updated)
     })
 
-    e.DELETE("/tasks/:id", func(c echo.Context) error {
+    g.DELETE("/:id", func(c echo.Context) error {
         id, err := strconv.Atoi(c.Param("id"))
         
         if err != nil {
